@@ -9,6 +9,7 @@ import {
   aws_iam as iam,
   aws_pipes as pipes,
 } from 'aws-cdk-lib';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'; // 新增 import
 import { Construct } from 'constructs';
 
 export class AwsEventDrivenStack extends Stack {
@@ -29,10 +30,10 @@ export class AwsEventDrivenStack extends Stack {
     });
 
     // 3. enrichment Lambda
-    const enrichPatientEventFn = new lambda.Function(this, 'EnrichPatientEventFn', {
+    const enrichPatientEventFn = new NodejsFunction(this, 'EnrichPatientEventFn', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'enrich.handler',
-      code: lambda.Code.fromAsset('lambda/enrich'),
+      entry: 'lambda/enrich/enrich.ts',  // 直接指向 .ts 文件
+      handler: 'handler',
       timeout: Duration.seconds(10),
       environment: {
         TABLE_NAME: patientTable.tableName,
@@ -42,10 +43,10 @@ export class AwsEventDrivenStack extends Stack {
     patientTable.grantReadData(enrichPatientEventFn);
 
     // 4. 简化版回调 Lambda（只打印日志）
-    const logCallbackFn = new lambda.Function(this, 'LogCallbackFn', {
+    const logCallbackFn = new NodejsFunction(this, 'LogCallbackFn', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'log.handler',
-      code: lambda.Code.fromAsset('lambda/log'),
+      entry: 'lambda/log/log.ts',  // 直接指向 .ts 文件
+      handler: 'handler',
       timeout: Duration.seconds(5),
     });
 
@@ -86,16 +87,8 @@ export class AwsEventDrivenStack extends Stack {
         filterCriteria: {
           filters: [
             {
-              pattern: JSON.stringify({
-                eventName: ['MODIFY'],
-                dynamodb: {
-                  NewImage: {
-                    waitTimeSeconds: {
-                      N: [{ numeric: ['>', 600] }],
-                    },
-                  },
-                },
-              }),
+              pattern: '{"eventName":["MODIFY"],"dynamodb":{"NewImage":{"waitTimeSeconds":{"N":["800"]}}}}',
+              // pattern: '{"eventName":["MODIFY"],"dynamodb":{"NewImage":{"waitTimeSeconds":{"N":[{"numeric":[">",600]}]}}}}',
             },
           ],
         },
