@@ -30,9 +30,11 @@ export class AwsEventDrivenStack extends Stack {
     });
 
     // 3. enrichment Lambda
+    const LAMBDA_RUNTIME = lambda.Runtime.NODEJS_22_X;
+
     // EnrichPatientEventFn
     const enrichPatientEventFn = new NodejsFunction(this, 'EnrichPatientEventFn', {
-      runtime: lambda.Runtime.NODEJS_22_X,
+      runtime: LAMBDA_RUNTIME,
       entry: 'lambda/enrich/enrich.ts',
       handler: 'handler',
       timeout: Duration.seconds(10),
@@ -43,7 +45,7 @@ export class AwsEventDrivenStack extends Stack {
 
     // LogCallbackFn
     const logCallbackFn = new NodejsFunction(this, 'LogCallbackFn', {
-      runtime: lambda.Runtime.NODEJS_22_X,
+      runtime: LAMBDA_RUNTIME,
       entry: 'lambda/log/log.ts',
       handler: 'handler',
       timeout: Duration.seconds(5),
