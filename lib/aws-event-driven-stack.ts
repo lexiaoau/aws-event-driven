@@ -30,9 +30,10 @@ export class AwsEventDrivenStack extends Stack {
     });
 
     // 3. enrichment Lambda
+    // EnrichPatientEventFn
     const enrichPatientEventFn = new NodejsFunction(this, 'EnrichPatientEventFn', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      entry: 'lambda/enrich/enrich.ts',  // 直接指向 .ts 文件
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: 'lambda/enrich/enrich.ts',
       handler: 'handler',
       timeout: Duration.seconds(10),
       environment: {
@@ -40,12 +41,10 @@ export class AwsEventDrivenStack extends Stack {
       },
     });
 
-    patientTable.grantReadData(enrichPatientEventFn);
-
-    // 4. 简化版回调 Lambda（只打印日志）
+    // LogCallbackFn
     const logCallbackFn = new NodejsFunction(this, 'LogCallbackFn', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      entry: 'lambda/log/log.ts',  // 直接指向 .ts 文件
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: 'lambda/log/log.ts',
       handler: 'handler',
       timeout: Duration.seconds(5),
     });
