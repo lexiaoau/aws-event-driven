@@ -126,19 +126,125 @@ Key configuration is managed inside the CDK stack (`lib/aws-event-driven-stack.t
 
 ---
 
+## Other Useful Commands
+
+| Command | Description |
+|---|---|
+| `aws logs tail   /aws/lambda/<lambda-func-full-name>  --follow` | Watch lambda log |
+| `npx cdk deploy` | Run cdk deploy |
+
+
+```bash
+aws dynamodb update-item \
+  --table-name AwsEventDrivenStack-PatientQueueTable750150DF-1MREW41LCTF0M \
+  --key '{"patientId": {"S": "P123"}, "queueId": {"S": "Q1"}}' \
+  --update-expression "SET waitTimeSeconds = :val" \
+  --expression-attribute-values '{":val": {"N": "800"}}'`
+``` 
+  
+  | Update item in DynamoDB table |
+
+
+
+---
+
 ## Raw Event example
 
 <details>
-  <summary>点击展开内容</summary>
-
-这里是折叠起来的内容。  
-你可以放文字、代码块、图片、列表等等。
+  <summary>Raw event from Pipe</summary>
 
 ```js
-console.log("代码也可以放在里面")
+[
+  {
+    "eventID": "140e9cd556c7b3764cd4e7fa85f389c4",
+    "eventName": "MODIFY",
+    "eventVersion": "1.1",
+    "eventSource": "aws:dynamodb",
+    "awsRegion": "ap-southeast-2",
+    "dynamodb": {
+      "ApproximateCreationDateTime": 1776473392,
+      "Keys": {
+        "queueId": {
+          "S": "Q1"
+        },
+        "patientId": {
+          "S": "P123"
+        }
+      },
+      "NewImage": {
+        "queueId": {
+          "S": "Q1"
+        },
+        "waitTimeSeconds": {
+          "N": "800"
+        },
+        "patientId": {
+          "S": "P123"
+        }
+      },
+      "OldImage": {
+        "queueId": {
+          "S": "Q1"
+        },
+        "waitTimeSeconds": {
+          "N": "900"
+        },
+        "patientId": {
+          "S": "P123"
+        }
+      },
+      "SequenceNumber": "7017200000352847893195899",
+      "SizeBytes": 100,
+      "StreamViewType": "NEW_AND_OLD_IMAGES"
+    },
+    "eventSourceARN": "arn:aws:dynamodb:ap-southeast-2:<id>:table/AwsEventDrivenStack-PatientQueueTable<id>/stream/2026-04-16T12:50:35.374"
+  }
+]
 ```
 
 </details>
+
+<details>
+  <summary>Raw SNS event</summary>
+
+```js
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:ap-southeast-2:<id>:patient-callback-events:<event-id>",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "9f37d2b8-312c-57a8-a1a0-b0e4e65ddac7",
+        "TopicArn": "arn:aws:sns:ap-southeast-2:<id>:patient-callback-events",
+        "Message": "{\"patientId\":\"P123\",\"queueId\":\"Q1\",\"waitTimeSeconds\":800,\"callbackReason\":\"EXCEEDED_WAIT_THRESHOLD\",\"timestamp\":\"2026-04-18T00:49:53.552Z\"}",
+        "Timestamp": "2026-04-18T00:49:53.582Z",
+        "SignatureVersion": "1",
+        "Signature": "<long-string>",
+        "SigningCertUrl": "https://sns.ap-southeast-2.amazonaws.com/<id>.pem",
+        "Subject": null,
+        "UnsubscribeUrl": "https://sns.ap-southeast-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:ap-southeast-2:<id>:patient-callback-events:<id>",
+        "MessageAttributes": {}
+      }
+    }
+  ]
+}
+```
+
+</details>
+
+---
+
+## Notes
+
+- The dynamo item value passed to pipe is of **String** type even if it's numeric in table.
+- Need to create an IAM role for cdk deploy first.
+- If cdk deploy has error, one way to resolve it is to go to CloudFormation and manually delete the stack and all its resources.
+- Pipe filter can be created in UI, but better to add it in cdk code as raw string.
+
+---
+
 
 ## Clean Up
 
